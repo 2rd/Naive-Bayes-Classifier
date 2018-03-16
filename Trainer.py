@@ -5,14 +5,29 @@
 #   - Ord gitt klasse
 
 
+def main():
+    posPath = 'C:\\Users\\tordk\\Documents\\INFO284\\1rstGroupAssingment\\Project\\DATA\\aclImdb\\train\\pos'
+    negPath = 'C:\\Users\\tordk\\Documents\\INFO284\\1rstGroupAssingment\\Project\\DATA\\aclImdb\\train\\neg'
+
+    posWords = wordParser(posPath)
+    negWords = wordParser(negPath)
+
+    posVocab = vocabulary(posWords)
+    negVocab = vocabulary(negWords)
+
+    numOfPosFiles = len([file for file in os.listdir(posPath)])
+    numOfNegFiles = len([file for file in os.listdir(negPath)])
+
+    posWordProbability = wordProbability(posVocab, posWords.__len__())
+
+
 # Parser alle dokumentene i en mappe og returnerer en liste med alle ordene de inneholder.
-def wordParser():
+def wordParser(path):
     import os
     import string
 
     a = list()
     translator = str.maketrans('', '', string.punctuation)
-    path = 'C:\\Users\\tordk\\Documents\\INFO284\\1rstGroupAssingment\\Project\\DATA\\aclImdb\\train\\pos'
     # path = 'C:\\Users\\tordk\\Documents\\INFO284\\1rstGroupAssingment\\300_pos'
     for filename in os.listdir(path):
         with open(path + '\\' + filename, encoding='utf-8') as f:
@@ -26,25 +41,22 @@ def wordParser():
     return a
 
 # Tar en liste med ord og returnerer en dictionary med hvert unike ord og antall ganger de står i listen.
-def dictionary():
-    counts = dict()
-    a = wordParser()
-    for word in a:
-        if word in counts:
-            counts[word] += 1
-        else:
-            counts[word] = 1
-    return counts
+def vocabulary(words):
+    vocab = dict()
 
-# Returnerer antall ord totalt.
-def wordTotal():
-    bagofwords = wordParser()
-    return bagofwords.__len__()
+    for word in words:
+        if word in vocab:
+            vocab[word] += 1
+        else:
+            vocab[word] = 1
+    return vocab
+
+
 
 # Returnerer sannsynligheten av noe... nk
-def wordProbability(word):
-    numofwords = wordTotal()
-    dict = dictionary()
+def wordProbability(vocabulary, totalWords):
+    newVocab = dict()
+    for word in vocabulary:
+        newVocab[word] = dict.get(word)/totalWords
 
-    probability = (dictionary[word] + 1) / (numofwords + dict.__len__())
-    return probability
+    return newVocab
