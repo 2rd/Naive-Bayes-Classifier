@@ -4,12 +4,18 @@
 #   - Ord
 #   - Ord gitt klasse
 
+import os
+import string
+import math
+
+
+posPath = 'C:\\Users\\tordk\\Documents\\INFO284\\1rstGroupAssingment\\Project\\DATA\\aclImdb\\train\\pos'
+negPath = 'C:\\Users\\tordk\\Documents\\INFO284\\1rstGroupAssingment\\Project\\DATA\\aclImdb\\train\\neg'
 
 def main():
-    import os
 
-    posPath = 'C:\\Users\\tordk\\Documents\\INFO284\\1rstGroupAssingment\\Project\\DATA\\aclImdb\\train\\pos'
-    negPath = 'C:\\Users\\tordk\\Documents\\INFO284\\1rstGroupAssingment\\Project\\DATA\\aclImdb\\train\\neg'
+
+
     #posPath = 'C:\\Users\\tordk\\Documents\\INFO284\\1rstGroupAssingment\\300_pos'
     #negPath = 'C:\\Users\\tordk\\Documents\\INFO284\\1rstGroupAssingment\\300_neg'
 
@@ -34,8 +40,7 @@ def main():
 
 # Parser alle dokumentene i en mappe og returnerer en liste med alle ordene de inneholder.
 def wordParser(path):
-    import os
-    import string
+
 
     a = list()
     translator = str.maketrans('', '', string.punctuation)
