@@ -142,6 +142,8 @@ def main():
     MNB.fit(X[100:], y[100:])
 
     # Kjører predict-metoden på de 100 første reviews i X.
+    # pred = den predictede klassen til de 100 første reviews i X.
+    # true = Den reelle klassen til de 100 første reviews i X.
     pred = MNB.predict(X[:100])
     true = y[:100]
 
