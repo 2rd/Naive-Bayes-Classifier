@@ -9,6 +9,8 @@ test_pos_path = 'DATA\\aclImdb\\test\\pos'
 
 target_names = ['pos', 'neg']
 
+# Trainer og tester classifieren.
+# parameteret no_of_testreviews tar et tall på hvor mange reviews man vil teste opp mot.
 def main(no_of_testreviews):
 
     # X = en array med hver review, y = en array med verdiene 1 eller 0.
