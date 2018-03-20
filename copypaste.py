@@ -95,29 +95,39 @@ class SpamDetector(object):
 
     def predict(self, X):
         result = []
+        # Itererer gjennom alle reviews.
         for x in X:
+            # Counts = alle de unike ordene i reviewen, med antall ganger hvert ord figurerer.
             counts = self.get_word_counts(self.tokenize(x))
+            # Oppretter en score for begge klassene.
             spam_score = 0
             ham_score = 0
+            # Itererer gjennom alle de unike ordene i reviewen.
             for word, _ in counts.items():
+                # Gir en faen i om ordet ikke finnes i det globale vokabularet.
                 if word not in self.vocab: continue
 
-                # add Laplace smoothing
+                # Regner ut log av antall ganger ordet finnes i det klassespesifikke vokabluaret,
+                # deler på totalt antall ord i det klassespesifikke vokabularet antall unike ord totalt.
+                # Legger til 1 for "laplance smoothing" i telleren ( i tilfelle telleren blir 0 ).
                 log_w_given_spam = math.log((self.word_counts['neg'].get(word, 0.0) + 1) / (
                             sum(self.word_counts['neg'].values()) + len(self.vocab)))
                 log_w_given_ham = math.log((self.word_counts['pos'].get(word, 0.0) + 1) / (
                             sum(self.word_counts['pos'].values()) + len(self.vocab)))
-
+                # Legger sannsynligheten for ordet gitt klasse til i score.
                 spam_score += log_w_given_spam
                 ham_score += log_w_given_ham
 
+            #Legger til sannsynligheten for at en review er av en klasse inn i score.
             spam_score += self.log_class_priors['neg']
             ham_score += self.log_class_priors['pos']
 
+            # Legger til klassen med den høyeste scoren i result
             if spam_score > ham_score:
                 result.append(1)
             else:
                 result.append(0)
+        # returnerer en liste med result (1 eller 0) for alle reviews i X.
         return result
 
 def main():
@@ -135,5 +145,6 @@ def main():
     pred = MNB.predict(X[:100])
     true = y[:100]
 
+    # Sjekker treffsikkerheten med å sammenlingne alle elementene(1 eller 0) i pred og true.
     accuracy = sum(1 for i in range(len(pred)) if pred[i] == true[i]) / float(len(pred))
     print("{0:.4f}".format(accuracy))
