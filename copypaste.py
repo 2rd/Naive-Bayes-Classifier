@@ -3,7 +3,7 @@ import re
 import string
 import math
 
-DATA_DIR = 'C:\\Users\\tordk\\Documents\\INFO284\\1rstGroupAssingment\\Project\\DATA\\aclImdb\\train\\'
+DATA_DIR = 'DATA\\aclImdb\\train\\'
 target_names = ['pos', 'neg']
 
 
@@ -95,6 +95,8 @@ class SpamDetector(object):
 
     def predict(self, X):
         result = []
+        predicted = 0
+        predicted100 = 0
         # Itererer gjennom alle reviews.
         for x in X:
             # Counts = alle de unike ordene i reviewen, med antall ganger hvert ord figurerer.
@@ -127,25 +129,29 @@ class SpamDetector(object):
                 result.append(1)
             else:
                 result.append(0)
+            predicted += 1
+            if (predicted == (predicted100 + 100)):
+                predicted100+=100
+                print(str(predicted100))
         # returnerer en liste med result (1 eller 0) for alle reviews i X.
         return result
 
 def main():
-
+    testpath = 'DATA\\aclImdb\\test\\'
     # X = en array med hver review, y = en array med verdiene 1 eller 0.
     # Review og tall(klasse) kommer på samme plass i X og y.
     X, y = get_data(DATA_DIR)
-
+    Xtest, ytest = get_data(testpath)
     # Oppretter et Spamdetector-object.
     # Kjører fit-metoden med reviews(X) og tilhørende klasser(y) som input.
     MNB = SpamDetector()
-    MNB.fit(X[100:], y[100:])
+    MNB.fit(X, y)
 
     # Kjører predict-metoden på de 100 første reviews i X.
     # pred = den predictede klassen til de 100 første reviews i X.
     # true = Den reelle klassen til de 100 første reviews i X.
-    pred = MNB.predict(X[:100])
-    true = y[:100]
+    pred = MNB.predict(Xtest[:100])
+    true = ytest[:100]
 
     # Sjekker treffsikkerheten med å sammenlingne alle elementene(1 eller 0) i pred og true.
     accuracy = sum(1 for i in range(len(pred)) if pred[i] == true[i]) / float(len(pred))

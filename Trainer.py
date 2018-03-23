@@ -9,15 +9,15 @@ import string
 import math
 
 
-posPath = 'C:\\Users\\tordk\\Documents\\INFO284\\1rstGroupAssingment\\Project\\DATA\\aclImdb\\train\\pos'
-negPath = 'C:\\Users\\tordk\\Documents\\INFO284\\1rstGroupAssingment\\Project\\DATA\\aclImdb\\train\\neg'
+posPath = 'DATA\\aclImdb\\train\\pos'
+negPath = 'DATA\\aclImdb\\train\\neg'
 
 def main():
 
 
 
-    #posPath = 'C:\\Users\\tordk\\Documents\\INFO284\\1rstGroupAssingment\\300_pos'
-    #negPath = 'C:\\Users\\tordk\\Documents\\INFO284\\1rstGroupAssingment\\300_neg'
+    posPath = 'C:\\Users\\tordk\\Documents\\INFO284\\1rstGroupAssingment\\300_pos'
+    negPath = 'C:\\Users\\tordk\\Documents\\INFO284\\1rstGroupAssingment\\300_neg'
 
     posWords = wordParser(posPath)
     negWords = wordParser(negPath)
@@ -27,8 +27,11 @@ def main():
 
     numOfPosFiles = len([file for file in os.listdir(posPath)])
     numOfNegFiles = len([file for file in os.listdir(negPath)])
-    probOfClass1 = numOfPosFiles/(numOfNegFiles + numOfPosFiles)
-    probOfClass0 = numOfNegFiles/(numOfNegFiles + numOfPosFiles)
+    totalFiles = numOfPosFiles + numOfNegFiles
+    probOfClass1 = math.log10(numOfPosFiles/totalFiles)
+    probOfClass0 = math.log10(numOfNegFiles/totalFiles)
+    print(str(probOfClass1))
+    print(str(probOfClass0))
 
     posWordProbability = wordProbability(posVocab, posWords.__len__())
     negWordProbability = wordProbability(negVocab, negWords.__len__())

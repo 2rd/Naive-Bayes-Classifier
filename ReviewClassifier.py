@@ -7,8 +7,6 @@ neg_path = 'DATA\\aclImdb\\train\\neg'
 test_neg_path = 'DATA\\aclImdb\\test\\neg'
 test_pos_path = 'DATA\\aclImdb\\test\\pos'
 
-target_names = ['pos', 'neg']
-
 # Trainer og tester classifieren.
 # parameteret no_of_testreviews tar et tall på hvor mange reviews man vil teste opp mot.
 def main(no_of_testreviews):
@@ -31,7 +29,8 @@ def main(no_of_testreviews):
 
     # Sjekker treffsikkerheten med å sammenlingne alle elementene(1 eller 0) i predicition og correct.
     accuracy = sum(1 for i in range(len(prediction)) if prediction[i] == correct[i]) / float(len(prediction))
-    print("{0:.3f}".format(accuracy))
+    print("Antall reviews testet: " + str(no_of_testreviews))
+    print("treffsikkerhet:  " + "{0:.3f}".format(accuracy))
 
 # Gjør innholdet i hver review om til en string og legger det i en array.
 # Legger en review's tilhørende klasse på samme plass i target.
@@ -56,21 +55,23 @@ class reviewClassifier(object):
     global_vocab = set()
     class_priors = {}
     prob_w_given_class = {}
+    class_dictionaries = {}
 
     def fit(self, X, Y):
-        class_dictionaries = {}
+
         # n = antall reviews
         total_reviews = len(X)
 
         # teller antall positive og negative filer og regner ut log prior probabilty til klassene.
         total_posfiles = sum(1 for c in Y if c == 1)
         total_negfiles = sum(1 for c in Y if c == 0)
+
         self.class_priors['pos'] = math.log(total_posfiles/total_reviews)
         self.class_priors['neg'] = math.log(total_negfiles/total_reviews)
 
         # Oppretter et dictionary for hver av klassene i dictionary.
-        class_dictionaries['pos'] = {}
-        class_dictionaries['neg'] = {}
+        self.class_dictionaries['pos'] = {}
+        self.class_dictionaries['neg'] = {}
 
         # Itererer gjennom både X og Y.
         # zip() gjør at den stopper å iterere når slutten av det korteste arrayet av X og Y er nådd.
@@ -86,10 +87,10 @@ class reviewClassifier(object):
             # Tar hvert unike ord i reviewen og oppdaterer valuen med antall ganger det finnes.
             # Putter hvert unike ord i det globale vokabularet.
             for word, count in vocab.items():
-                if word in class_dictionaries[c]:
-                    class_dictionaries[c][word] += 1
+                if word in self.class_dictionaries[c]:
+                    self.class_dictionaries[c][word] += 1
                 else:
-                    class_dictionaries[c][word] = 1
+                    self.class_dictionaries[c][word] = 1
                 if word in self.global_vocab:
                     self.global_vocab.add(word)
 
@@ -97,26 +98,33 @@ class reviewClassifier(object):
         self.prob_w_given_class['neg'] = {}
 
         # Regner ut sannsynligheten for hvert ord gitt klasse
-        for word in class_dictionaries['pos']:
-            self.prob_w_given_class['pos'][word] = math.log((class_dictionaries['pos'].get(word, 0.0) + 1) /
-                                                            (sum(class_dictionaries['pos'].values()) + len(self.global_vocab)))
-        for word in class_dictionaries['neg']:
-            self.prob_w_given_class['neg'][word] = math.log((class_dictionaries['neg'].get(word, 0.0) + 1) /
-                                                            (sum(class_dictionaries['neg'].values()) + len(self.global_vocab)))
+        for word in self.class_dictionaries['pos']:
+            self.prob_w_given_class['pos'][word] = math.log((self.class_dictionaries['pos'].get(word, 0.0) + 1) /
+                                                            (sum(self.class_dictionaries['pos'].values()) + len(self.global_vocab)))
+        for word in self.class_dictionaries['neg']:
+            self.prob_w_given_class['neg'][word] = math.log((self.class_dictionaries['neg'].get(word, 0.0) + 1) /
+                                                            (sum(self.class_dictionaries['neg'].values()) + len(self.global_vocab)))
+
+    def p_w_given_c(self, c, word):
+        result = math.log((self.class_dictionaries[c].get(word, 0.0) + 1) /
+                                                        (sum(self.class_dictionaries[c].values()) + len(
+                                                            self.global_vocab)))
+        return result
 
     #Lager en prediction på hver review i X på om den er positiv eller negativ.
     def predict(self, X):
         result = []
-
+        predicted = 0
         for x in X:
             vocab = self.word_count(self.text_to_words(x))
 
-            pos_score = 0
-            neg_score = 0
+            pos_score = 1
+            neg_score = 1
 
             for word in vocab:
-                pos_score += self.prob_w_given_class['pos'].get(word, 0.0)
-                neg_score += self.prob_w_given_class['neg'].get(word, 0.0)
+
+                pos_score += self.p_w_given_c('pos', word)
+                neg_score += self.p_w_given_c('neg', word)
 
             pos_score += self.class_priors['pos']
             neg_score += self.class_priors['neg']
@@ -125,6 +133,7 @@ class reviewClassifier(object):
                 result.append(1)
             else:
                 result.append(0)
+
         return result
 
     # Tar en reviewtekst, fjerner punctuation og returnerer en array med alle ordene den inneholder.
