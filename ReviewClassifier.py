@@ -1,36 +1,21 @@
-import os
+
 import string
 import math
+from pathlib import Path
+import pickle
+import collections
 
-pos_path = 'DATA\\aclImdb\\train\\pos'
-neg_path = 'DATA\\aclImdb\\train\\neg'
-test_neg_path = 'DATA\\aclImdb\\test\\neg'
-test_pos_path = 'DATA\\aclImdb\\test\\pos'
+pos_path = Path('DATA/aclImdb/train/1000_pos')
+neg_path = Path('DATA/aclImdb/train/1000_neg')
+test_neg_path = Path('DATA/aclImdb/test/1000_neg')
+test_pos_path = Path('DATA/aclImdb/test/1000_pos')
+filetest = Path('10608_10.txt')
+filetest2 = Path('7445_1.txt')
 
-# Trainer og tester classifieren.
-# parameteret no_of_testreviews tar et tall på hvor mange reviews man vil teste opp mot.
-def main(no_of_testreviews):
 
-    # X = en array med hver review, y = en array med verdiene 1 eller 0.
-    # Review og tall(klasse) kommer på samme plass i X og y.
-    X, y = get_reviews(pos_path, neg_path)
 
-    # Oppretter et reviewClassifier-objekt
-    # Kjører fit-metoden med reviews(X) og tilhørende klasser(y) som input.
-    MNB = reviewClassifier()
-    MNB.fit(X, y)
 
-    test_X, test_y = get_reviews(test_pos_path, test_neg_path)
 
-    # prediction = de predictede klassene til testreviews.
-    # correct = De reelle klassene tilhørende reviews.
-    prediction = MNB.predict(test_X[:no_of_testreviews])
-    correct = test_y[:no_of_testreviews]
-
-    # Sjekker treffsikkerheten med å sammenlingne alle elementene(1 eller 0) i predicition og correct.
-    accuracy = sum(1 for i in range(len(prediction)) if prediction[i] == correct[i]) / float(len(prediction))
-    print("Antall reviews testet: " + str(no_of_testreviews))
-    print("treffsikkerhet:  " + "{0:.3f}".format(accuracy))
 
 # Gjør innholdet i hver review om til en string og legger det i en array.
 # Legger en review's tilhørende klasse på samme plass i target.
@@ -38,27 +23,31 @@ def get_reviews(pos_path, neg_path):
     reviews = []
     target = []
 
-    for filename in os.listdir(pos_path):
-        with open(pos_path + '\\' + filename, encoding='utf-8') as f:
-            reviews.append(f.read())
-            target.append(1)
+    for filename in pos_path.glob('**/*.txt'):
+     #   with filename.open(encoding='UTF-8') as f:
+        reviews.append(filename.read_text(encoding='UTF-8'))
+        target.append(1)
 
-    for filename in os.listdir(neg_path):
-        with open(neg_path + '\\' + filename, encoding='utf-8') as f:
-            reviews.append(f.read())
-            target.append(0)
+    for filename in neg_path.glob('**/*.txt'):
+    #    with filename.open(encoding='UTF-8') as f:
+        reviews.append(filename.read_text(encoding='UTF-8'))
+        target.append(0)
 
     return reviews, target
 
+#with open('reviewClassifier.pkl', 'wb') as output:
+
+
 class reviewClassifier(object):
 
-    global_vocab = set()
-    class_priors = {}
-    prob_w_given_class = {}
-    class_dictionaries = {}
+    def __init__(self, global_vocab, class_priors, prob_w_given_class, class_dictionaries):
+        self.global_vocab = global_vocab
+        self.class_priors = class_priors
+        self.prob_w_given_class = prob_w_given_class
+        self.class_dictionaries = class_dictionaries
 
     def fit(self, X, Y):
-
+        print('Please wait while the model is being trained...')
         # n = antall reviews
         total_reviews = len(X)
 
@@ -80,9 +69,9 @@ class reviewClassifier(object):
             # setter c til klassen av reviewen som itereres gjennom.
             c = 'pos' if y == 1 else 'neg'
 
-            # Deler opp dokumentet i ord, fjerner puncutation,
-            # og putter det inn i dictionaries med antall ganger hvert ord er i reviewen.
-            vocab = self.word_count(self.text_to_words(x))
+            # Tar hvert ord fra dokumentet og lager et dictionary m/hjelp av Counter
+            vocab = collections.Counter()
+            vocab.update(self.text_to_words(x))
 
             # Tar hvert unike ord i reviewen og oppdaterer valuen med antall ganger det finnes.
             # Putter hvert unike ord i det globale vokabularet.
@@ -114,9 +103,10 @@ class reviewClassifier(object):
     #Lager en prediction på hver review i X på om den er positiv eller negativ.
     def predict(self, X):
         result = []
-        predicted = 0
+
         for x in X:
-            vocab = self.word_count(self.text_to_words(x))
+            vocab = collections.Counter()
+            vocab.update(self.text_to_words(x))
 
             pos_score = 1
             neg_score = 1
@@ -144,12 +134,59 @@ class reviewClassifier(object):
 
         return review_text.split()
 
-    # Tar en string med ord, returnerer et vocabulary med hvert unike ord og antall ganger det finnes i strengen.
-    def word_count(self, words):
-        dictionary = {}
-        for word in words:
-            if word in dictionary:
-                dictionary[word] += 1
+
+
+    #takes a review and categorizes it, either positive or negative
+    def categorize(self, filepath):
+        review = Path(filepath)
+        result = self.predict([review.read_text(encoding='UTF-8 ')])
+        for i in result:
+            if i == 1:
+                print('positive')
             else:
-                dictionary[word] = 1
-        return dictionary
+                print('negative')
+
+
+# Tester modellen i accuracy, precision, recall, og f-measure.
+# paramerter 'no_of_reviews' : (integer) antall reviews modellen skal testes på
+def test(no_of_reviews):
+    test_X, test_y = get_reviews(test_pos_path, test_neg_path)
+
+    # prediction = de predictede klassene til testreviews.
+    # correct = De reelle klassene tilhørende reviews.
+    prediction = model.predict(test_X[:no_of_reviews])
+    correct = test_y[:no_of_reviews]
+
+    tp = sum(1 for i in range(len(prediction)) if ((prediction[i] == 1) and (correct[i] == 1)))
+    fp = sum(1 for i in range(len(prediction)) if ((prediction[i] == 1) and (correct[i] == 0)))
+    tn = sum(1 for i in range(len(prediction)) if ((prediction[i] == 0) and (correct[i] == 0)))
+    fn = sum(1 for i in range(len(prediction)) if ((prediction[i] == 0) and (correct[i] == 1)))
+
+    # Sjekker treffsikkerheten med å sammenlingne alle elementene(1 eller 0) i predicition og correct.
+    accuracy = (tp + tn) / (tp + tn + fp + fn)
+    precision = tp / (tp + fp)
+    recall = tp / (tp + fn)
+    f = 2*((precision*recall)/(precision+recall))
+
+    print("Antall reviews testet: " + str(no_of_reviews))
+    print("accuracy:  " + "{0:.3f}".format(accuracy))
+    print("precision:  " + "{0:.3f}".format(precision))
+    print("recall:    "+ "{0:.3f}".format(recall))
+    print("f-measure:     "+ "{0:.3f}".format(f))
+
+
+
+#Laster modellen, eller lager ny modell, dersom den ikke eksisterer.
+try:
+    model = pickle.load(open('model.pickle', 'rb'))
+except(OSError, IOError) as e:
+    # train_X = en array med hver review, train_y = en array med verdiene 1 eller 0.
+    # Review og tall(klasse) kommer på samme plass i train_X og train_y.
+    train_X, train_y = get_reviews(pos_path, neg_path)
+    # Oppretter et reviewClassifier-objekt
+    model = reviewClassifier(set(), {}, {}, {})
+    # Kjører fit-metoden med reviews(train_X) og tilhørende klasser(train_y) som input.
+    model.fit(train_X, train_y)
+
+# Lagre modellen
+pickle.dump(model, open('model.pickle', 'wb'))
