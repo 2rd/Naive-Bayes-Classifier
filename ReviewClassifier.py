@@ -4,39 +4,33 @@ import math
 from pathlib import Path
 import pickle
 import collections
+import time
 
-pos_path = Path('DATA/aclImdb/train/1000_pos')
-neg_path = Path('DATA/aclImdb/train/1000_neg')
-test_neg_path = Path('DATA/aclImdb/test/1000_neg')
-test_pos_path = Path('DATA/aclImdb/test/1000_pos')
+pos_path = Path('DATA/aclImdb/train/pos')
+neg_path = Path('DATA/aclImdb/train/neg')
+test_neg_path = Path('DATA/aclImdb/test/neg')
+test_pos_path = Path('DATA/aclImdb/test/pos')
 filetest = Path('10608_10.txt')
 filetest2 = Path('7445_1.txt')
-
-
-
-
-
 
 # Gjør innholdet i hver review om til en string og legger det i en array.
 # Legger en review's tilhørende klasse på samme plass i target.
 def get_reviews(pos_path, neg_path):
+    print('\n' + '----------Retrieving reviews....--------------')
+    start = time.time()
     reviews = []
     target = []
 
     for filename in pos_path.glob('**/*.txt'):
-     #   with filename.open(encoding='UTF-8') as f:
         reviews.append(filename.read_text(encoding='UTF-8'))
         target.append(1)
 
     for filename in neg_path.glob('**/*.txt'):
-    #    with filename.open(encoding='UTF-8') as f:
         reviews.append(filename.read_text(encoding='UTF-8'))
         target.append(0)
-
+    end = time.time()
+    print('Retrieving reviews took ' + '{0: .2f}'.format(end - start) + ' seconds to finish')
     return reviews, target
-
-#with open('reviewClassifier.pkl', 'wb') as output:
-
 
 class reviewClassifier(object):
 
@@ -47,7 +41,8 @@ class reviewClassifier(object):
         self.class_dictionaries = class_dictionaries
 
     def fit(self, X, Y):
-        print('Please wait while the model is being trained...')
+        print('\n' + '-------- Please wait while the model is being trained....-----------')
+        start = time.time()
         # n = antall reviews
         total_reviews = len(X)
 
@@ -94,6 +89,9 @@ class reviewClassifier(object):
             self.prob_w_given_class['neg'][word] = math.log((self.class_dictionaries['neg'].get(word, 0.0) + 1) /
                                                             (sum(self.class_dictionaries['neg'].values()) + len(self.global_vocab)))
 
+        end = time.time()
+        print('Training took ' + '{0: .3f}'.format(end - start) + ' seconds to finish')
+
     def p_w_given_c(self, c, word):
         result = math.log((self.class_dictionaries[c].get(word, 0.0) + 1) /
                                                         (sum(self.class_dictionaries[c].values()) + len(
@@ -102,6 +100,8 @@ class reviewClassifier(object):
 
     #Lager en prediction på hver review i X på om den er positiv eller negativ.
     def predict(self, X):
+        print('\n' + "Categorizing reviews... ")
+        start = time.time()
         result = []
 
         for x in X:
@@ -123,7 +123,8 @@ class reviewClassifier(object):
                 result.append(1)
             else:
                 result.append(0)
-
+        end = time.time()
+        print('Categorizing reviews took ' + '{0: .2f}'.format(end - start) + ' seconds to finish')
         return result
 
     # Tar en reviewtekst, fjerner punctuation og returnerer en array med alle ordene den inneholder.
@@ -134,8 +135,6 @@ class reviewClassifier(object):
 
         return review_text.split()
 
-
-
     #takes a review and categorizes it, either positive or negative
     def categorize(self, filepath):
         review = Path(filepath)
@@ -145,7 +144,6 @@ class reviewClassifier(object):
                 print('positive')
             else:
                 print('negative')
-
 
 # Tester modellen i accuracy, precision, recall, og f-measure.
 # paramerter 'no_of_reviews' : (integer) antall reviews modellen skal testes på
@@ -168,13 +166,11 @@ def test(no_of_reviews):
     recall = tp / (tp + fn)
     f = 2*((precision*recall)/(precision+recall))
 
-    print("Antall reviews testet: " + str(no_of_reviews))
+    print("\n" + "Number of reviews tested: " + str(no_of_reviews))
     print("accuracy:  " + "{0:.3f}".format(accuracy))
     print("precision:  " + "{0:.3f}".format(precision))
     print("recall:    "+ "{0:.3f}".format(recall))
     print("f-measure:     "+ "{0:.3f}".format(f))
-
-
 
 #Laster modellen, eller lager ny modell, dersom den ikke eksisterer.
 try:
