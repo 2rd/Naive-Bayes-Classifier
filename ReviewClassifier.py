@@ -10,8 +10,6 @@ pos_path = Path('DATA/aclImdb/train/pos')
 neg_path = Path('DATA/aclImdb/train/neg')
 test_neg_path = Path('DATA/aclImdb/test/neg')
 test_pos_path = Path('DATA/aclImdb/test/pos')
-filetest = Path('10608_10.txt')
-filetest2 = Path('7445_1.txt')
 
 # Gjør innholdet i hver review om til en string og legger det i en array.
 # Legger en review's tilhørende klasse på samme plass i target.
